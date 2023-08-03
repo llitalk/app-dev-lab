@@ -11,6 +11,6 @@ spec:
     name: user21-hello-chart-service
     weight: 100
   alternateBackends:
-     kind: Service
+    kind: Service
     name: user21-hello-world
     weight: 0
