@@ -5,6 +5,11 @@ metadata:
   name:  {{ .Release.Name }}
 spec:
   replicas:  {{ .Values.ReplicaNumber }}
+      volumes:
+        - name: index-html
+          configMap:
+            name: index.html
+            defaultMode: 420
   selector:
     matchLabels:
 # set your lab user name
@@ -12,18 +17,19 @@ spec:
   template:
     metadata:
       labels:
-# set your lab user name
         app: {{ .Release.Name }}
     spec:
       containers:
         - resources: {}
+        volumeMounts:
+          - name: index-html
+            mountPath: /tmp/html # this will mount the html.index file to it application location
           terminationMessagePath: /dev/termination-log
           name: {{ .Release.Name }}
           ports:
             - containerPort:  {{ .Values.containers.containerPort }}
               protocol: TCP
           imagePullPolicy: IfNotPresent
-# update with the image you build in part 1
           image: {{ .Values.containers.image }}:{{ .Values.containers.tag }}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
