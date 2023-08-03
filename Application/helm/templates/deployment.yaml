@@ -1,18 +1,16 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-# set your lab user name
   name:  {{ .Release.Name }}
 spec:
   replicas:  {{ .Values.ReplicaNumber }}
-      volumes:
+  volumes:
         - name: index-html
           configMap:
             name: index.html
             defaultMode: 420
   selector:
     matchLabels:
-# set your lab user name
       app: {{ .Release.Name }}
   template:
     metadata:
@@ -21,16 +19,39 @@ spec:
     spec:
       containers:
         - resources: {}
-        volumeMounts:
+      readinessProbe:
+                    httpGet:
+                      path: /health/readiness # this check the application url path
+                      port: {{ .Values.containers.containerPort  }} # In which port the Application is listening
+                      scheme: HTTP
+                    initialDelaySeconds: 1 # the time is waiting befor testing the application path
+                    timeoutSeconds: 1 # the time for timeout
+                    periodSeconds: 10 # the abount of time to wait between checks
+                    successThreshold: 1 # count to decalre seccessfull 
+                    failureThreshold: 3 # count to decalre failure 
+      livenessProbe:
+                      httpGet:
+                        path: /health/liveliness
+                        port: {{ .Values.containers.containerPort }}
+                        scheme: HTTP
+                      initialDelaySeconds: 1
+                      timeoutSeconds: 1
+                      periodSeconds: 10
+                      successThreshold: 1
+                      failureThreshold: 3
+                          env:
+                      - name: PORT
+                        value: {{ .Values.containers.containerPort | quote }}
+      volumeMounts:
           - name: index-html
-            mountPath: /tmp/html # this will mount the html.index file to it application location
-          terminationMessagePath: /dev/termination-log
+            mountPath: /tmp/htmls
+      terminationMessagePath: /dev/termination-log
           name: {{ .Release.Name }}
-          ports:
+      ports:
             - containerPort:  {{ .Values.containers.containerPort }}
               protocol: TCP
-          imagePullPolicy: IfNotPresent
-          image: {{ .Values.containers.image }}:{{ .Values.containers.tag }}
+      imagePullPolicy: IfNotPresent
+       image: {{ .Values.containers.image }} : {{ .Values.containers.tag }}
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
   strategy:
